@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def rule_to_binary(rule_number):
+    return [int(digit) for digit in np.binary_repr(rule_number, width=8)]
+
+def apply_rule(state, rule):
+    rule_number = 4 * state[0] + 2 * state[1] + state[2]
+    return rule[7 - rule_number]
+
+def step_ca(current_state, rule):
+    extended_state = np.pad(current_state, pad_width=1, mode='constant', constant_values=0)
+    new_state = np.array([apply_rule(extended_state[i:i+3], rule) for i in range(len(current_state))])
+    return new_state
+
+def generate_ca(rule_number, size, steps):
+    rule = rule_to_binary(rule_number)
+    states = np.zeros((steps, size), dtype=int)
+    states[0, size // 2] = 1  # initial condition: single cell in the center
+
+    for i in range(1, steps):
+        states[i] = step_ca(states[i-1], rule)
+
+    return states
+
+def xnor_operation(a, b):
+    return np.logical_not(np.logical_xor(a, b)).astype(int)
+
+def generate_ca(rule_number, steps):
+    size = steps  # Grid size is the same as the number of steps
+    rule = rule_to_binary(rule_number)
+    states = np.zeros((steps, size), dtype=int)
+    states[0, size // 2] = 1  # Initial condition: single cell in the center
+
+    for i in range(1, steps):
+        states[i] = step_ca(states[i-1], rule)
+
+    return states
+
+# Parameters
+steps = 764  # total number of steps to evolve (also determines the grid size)
+rule_a =18 # first rule number
+rule_b = 25  # second rule number
+
+
+# Generate CAs
+ca_a = generate_ca(rule_a, steps)
+ca_b = generate_ca(rule_b, steps)
+
+
+# Overlay using XNOR
+overlay_xnor = np.zeros_like(ca_a)
+for i in range(steps):
+    overlay_xnor[i] = xnor_operation(ca_a[i], ca_b[i])
+
+# Plotting
+plt.figure(figsize=(10, 10))
+plt.imshow(overlay_xnor, cmap='binary')
+plt.title(f'XNOR Overlay: Rules {rule_a} and {rule_b}')
+plt.xlabel('Cell Position')
+plt.ylabel('Step')
+plt.show()
